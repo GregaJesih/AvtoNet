@@ -4,28 +4,32 @@
 #
 # gsheets security: aplikacijo moraš povezati z google user accountom. Sledi navodilu tukaj https://www.youtube.com/watch?v=TU1znISrAGg
 #
+# tutorial : https://www.twilio.com/blog/2017/03/google-spreadsheets-ruby.html
 # Parametri:
 #   preglednica ... v katero gsheet preglednico vpišemo
 #   list .......... kateri list preglednice
 #   znamka ........ znamka vozila
 #   model ......... model vozila
 #
-preglednica="BMW R100 RT ponudba"
-list="Sveze"
-znamka="BMW"
-model="R1200 RT"
+preglednica="AvtoNet Yamaha motorji"
+list="Podatki"
+znamka="Yamaha"
+model="TMAX"
+kategorija="67000" # 61000=motorna kolesa, 67000 = maxi scooter.. drugega še ne poznam
+oblika="6017" #6017 = MaxiScooter .. drugo je še treba dopolniti
+ccm_min="500"
 #
 # ================================================================================================================================
 # od tu dalje ne tikaj brez potrebe
 #
-# Stolpci
 require 'rubygems'
 require 'nokogiri'
 require 'open-uri'
 require 'bundler'
 Bundler.require
-#
+
 columnname=[]
+columnname << "Slika"
 columnname << "Zap.št."
 columnname << "Id"
 columnname << "Ogledov danes"
@@ -66,7 +70,17 @@ end
 #
 puts "OglasiMotor | Berem avto.net"
 
-filter="https://www.avto.net/Ads/results.asp?znamka=#{znamka.gsub(" ","&")}&model=#{model.gsub(" ","&")}&modelID=&tip=&znamka2=&model2=&tip2=&znamka3=&model3=&tip3=&cenaMin=0&cenaMax=999999&letnikMin=0&letnikMax=2090&bencin=0&starost2=999&oblika=6004&ccmMin=0&ccmMax=99999&mocMin=&mocMax=&kmMin=0&kmMax=9999999&kwMin=0&kwMax=999&motortakt=0&motorvalji=0&lokacija=0&sirina=&dolzina=&dolzinaMIN=&dolzinaMAX=&nosilnostMIN=&nosilnostMAX=&lezisc=&presek=&premer=&col=&vijakov=&EToznaka=&vozilo=&airbag=&barva=&barvaint=&EQ1=1000000000&EQ2=1000000000&EQ3=1000000000&EQ4=100000000&EQ5=1000000000&EQ6=1000000000&EQ7=1110100120&EQ8=1010000006&EQ9=100000000&KAT=1060000000&PIA=&PIAzero=&PSLO=&akcija=&paketgarancije=&broker=&prikazkategorije=&kategorija=61000&zaloga=10&arhiv=&presort=&tipsort=&stran="
+#filter="https://www.avto.net/Ads/results.asp?znamka=#{znamka.gsub(" ","&")}&model=#{model.gsub(" ","&")}&modelID=&tip=&znamka2=&model2=&tip2=&znamka3=&model3=&tip3=&cenaMin=0&cenaMax=999999&letnikMin=0&letnikMax=2090&bencin=0&starost2=999&oblika=6004&ccmMin=0&ccmMax=99999&mocMin=&mocMax=&kmMin=0&kmMax=9999999&kwMin=0&kwMax=999&motortakt=0&motorvalji=0&lokacija=0&sirina=&dolzina=&dolzinaMIN=&dolzinaMAX=&nosilnostMIN=&nosilnostMAX=&lezisc=&presek=&premer=&col=&vijakov=&EToznaka=&vozilo=&airbag=&barva=&barvaint=&EQ1=1000000000&EQ2=1000000000&EQ3=1000000000&EQ4=100000000&EQ5=1000000000&EQ6=1000000000&EQ7=1110100120&EQ8=1010000006&EQ9=100000000&KAT=1060000000&PIA=&PIAzero=&PSLO=&akcija=&paketgarancije=&broker=&prikazkategorije=&kategorija=&zaloga=10&arhiv=&presort=&tipsort=&stran="
+filter01="https://www.avto.net/Ads/results.asp?znamka=#{znamka.gsub(" ","&")}&model=#{model.gsub(" ","&")}&modelID=&"
+filter02="tip=&znamka2=&model2=&tip2=&znamka3=&model3=&tip3=&cenaMin=0&cenaMax=999999&letnikMin=0&letnikMax=2090&bencin=0"
+filter03="&starost2=999&oblika=#{oblika.to_s}&ccmMin=#{ccm_min}&ccmMax=99999&mocMin=&mocMax=&kmMin=0&kmMax=9999999&kwMin=0&kwMax=999"
+filter04="&motortakt=0&motorvalji=0&lokacija=0&sirina=0&dolzina=&dolzinaMIN=0&dolzinaMAX=100&nosilnostMIN=0&nosilnost"
+filter05="MAX=999999&lezisc=&presek=0&premer=0&col=0&vijakov=0&EToznaka=0&vozilo=&airbag=&barva=&barvaint=&"
+filter06="EQ1=1000000000&EQ2=1000000000&EQ3=1000000000&EQ4=100000000&EQ5=1000000000&EQ6=1000000000&EQ7=1110100120"
+filter07="&EQ8=1010000006&EQ9=1000000000&KAT=1060000000&PIA=&PIAzero=&PSLO=&akcija=0&paketgarancije=&broker=0"
+filter08="&prikazkategorije=0&kategorija=#{kategorija.to_s}&zaloga=10&arhiv=0&presort=3&tipsort=DESC&stran=1&submodel=0"
+filter="#{filter01}#{filter02}#{filter03}#{filter04}#{filter05}#{filter06}#{filter07}#{filter08}"
+#puts filter
 doc=Nokogiri::HTML(open(filter))
 hrefs= doc.css("a").map {|element| element["href"]}
 oglasi=[]
@@ -86,8 +100,10 @@ puts "OglasiMotor | povezujem gsheets"
 
 session=GoogleDrive::Session.from_service_account_key("client_secret.json")
 spreadsheet= session.spreadsheet_by_title(preglednica)
-worksheet=spreadsheet.worksheet_by_title(list)
-
+#worksheet= spreadsheet.worksheets[0]
+#worksheet=spreadsheet.worksheets.first
+#worksheet=spreadsheet.worksheet_by_title(list)
+worksheet=spreadsheet.worksheet_by_title("Podatki")
 puts "OglasiMotor | vpis vrednosti"
 #
 # glava
@@ -104,6 +120,15 @@ row=2
 oglasi.each do |url_oglasa|
   #puts url_oglasa
   xml_oglasa=Nokogiri::HTML(open(url_oglasa))
+  #
+  # Slika
+  #
+  slika_url= xml_oglasa.xpath('//img[@class="OglasThumb"]').first["src"]
+  attribute_name="Slika"
+  attribute_value="=image(\"#{slika_url}\",1)"
+  #puts "ATTRIBUTE=#{attribute_name} VALUE=#{attribute_value}"
+  map=columnmap.select{|e| e[0] == attribute_name}
+  worksheet["#{map[0][1]}#{row}"]= attribute_value
   #
   # Zap. št. oglasa
   #
@@ -223,7 +248,7 @@ oglasi.each do |url_oglasa|
           km=attribute_value.to_i
       end
       if letnik!=nil and km!=nil
-        if letnik!=0
+        if letnik!=Time.now.year
             # zapiši
             km_na_leto=km.to_f/(Time.now.year.to_f-letnik.to_f)
             attribute_name="Km/Leto"
